@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Your Cart - PharmaSoft</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      inset: 0;
+      background-color: rgba(0,0,0,0.5);
+      backdrop-filter: blur(5px);
+    }
+    .modal-content {
+      background: #fff;
+      margin: 5% auto;
+      padding: 30px;
+      border-radius: 15px;
+      width: 90%;
+      max-width: 500px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+      animation: modalSlideIn 0.3s ease-out;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    @keyframes modalSlideIn {
+      from { transform: translateY(-50px); opacity: 0; }
+      to   { transform: translateY(0); opacity: 1; }
+    }
+    .close {
+      color: #aaa;
+      float: right;
+      font-size: 28px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: color 0.3s;
+    }
+    .close:hover { color: #333; }
+
+    .payment-methods { margin: 20px 0; }
+    .payment-method {
+      display: flex;
+      align-items: center;
+      padding: 15px;
+      border: 2px solid #e0e0e0;
+      border-radius: 10px;
+      margin: 10px 0;
+      cursor: pointer;
+      background: white;
+      transition: all 0.3s;
+    }
+    .payment-method:hover { 
+      border-color: #007bff; 
+      background: #f8f9fa;
+      transform: translateX(5px);
+    }
+    .payment-method.selected { 
+      border-color: #007bff; 
+      background: #e3f2fd;
+      box-shadow: 0 4px 12px rgba(0,123,255,0.2);
+    }
+    .payment-method input { 
+      margin-right: 15px; 
+      transform: scale(1.3); 
+      cursor: pointer;
+    }
+    .payment-icon {
+      width: 45px; 
+      height: 45px; 
+      margin-right: 15px;
+      display: flex; 
+      align-items: center; 
+      justify-content: center;
+      font-size: 22px; 
+      border-radius: 8px; 
+      color: white;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .razorpay-icon { background: linear-gradient(45deg, #3395ff, #1e88e5); }
+    
+    .cod-icon    { background: linear-gradient(45deg,#43e97b,#38f9d7); }
+
+    .payment-method-info {
+      flex: 1;
+    }
+    .payment-method-info strong {
+      display: block;
+      font-size: 16px;
+      margin-bottom: 3px;
+    }
+    .payment-method-info small {
+      color: #666;
+      font-size: 13px;
+    }
+    .payment-badge {
+      background: #28a745;
+      color: white;
+      padding: 3px 8px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: bold;
+      margin-left: 10px;
+    }
+
+    .order-summary {
+      background: #f8f9fa; 
+      padding: 20px; 
+      border-radius: 10px;
+      margin: 20px 0;
+      border: 1px solid #e0e0e0;
+    }
+    .order-summary h3 {
+      margin-top: 0;
+      color: #333;
+      border-bottom: 2px solid #007bff;
+      padding-bottom: 10px;
+    }
+    .summary-row {
+      display: flex; 
+      justify-content: space-between;
+      margin: 12px 0; 
+      padding: 8px 0;
+      font-size: 15px;
+    }
+    .summary-row.total {
+      border-top: 2px solid #007bff;
+      font-weight: bold; 
+      font-size: 1.2em; 
+      color: #007bff;
+      margin-top: 15px;
+      padding-top: 15px;
+    }
+
+    .pay-btn {
+      background: linear-gradient(45deg, #007bff, #0056b3);
+      color: white; 
+      border: none;
+      padding: 15px 30px; 
+      border-radius: 10px;
+      font-size: 16px; 
+      font-weight: bold;
+      cursor: pointer; 
+      width: 100%; 
+      margin-top: 20px;
+      transition: all 0.3s;
+      position: relative;
+      overflow: hidden;
+    }
+    .pay-btn:hover { 
+      transform: translateY(-2px); 
+      box-shadow: 0 8px 20px rgba(0,123,255,0.4); 
+    }
+    .pay-btn:active {
+      transform: translateY(0);
+    }
+    .pay-btn:disabled { 
+      background: #6c757d; 
+      cursor: not-allowed;
+      transform: none;
+    }
+    .pay-btn::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      background: rgba(255,255,255,0.3);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      transition: width 0.6s, height 0.6s;
+    }
+    .pay-btn:hover::before {
+      width: 300px;
+      height: 300px;
+    }
+
+    .success-animation { 
+      text-align: center; 
+      padding: 40px 20px; 
+    }
+    .success-checkmark {
+      width: 80px; 
+      height: 80px; 
+      border-radius: 50%;
+      background: #28a745; 
+      margin: 0 auto 20px;
+      display: flex; 
+      align-items: center; 
+      justify-content: center;
+      animation: successPulse 0.6s;
+      box-shadow: 0 4px 20px rgba(40,167,69,0.4);
+    }
+    @keyframes successPulse {
+      0% { transform: scale(0); }
+      50% { transform: scale(1.1); }
+      100% { transform: scale(1); }
+    }
+    .checkmark { 
+      color: white; 
+      font-size: 40px; 
+    }
+    .success-message { 
+      color: #28a745; 
+      font-size: 24px; 
+      font-weight: bold; 
+      margin: 20px 0; 
+    }
+    .order-id {
+      background: #e8f5e8; 
+      padding: 15px; 
+      border-radius: 8px;
+      margin: 20px 0; 
+      font-family: monospace; 
+      font-size: 16px;
+      border-left: 4px solid #28a745;
+      color: #155724;
+    }
+
+    .payment-note {
+      background: #fff3cd;
+      border-left: 4px solid #ffc107;
+      padding: 12px;
+      border-radius: 6px;
+      margin: 15px 0;
+      font-size: 14px;
+      color: #856404;
+    }
+
+    @media (max-width: 768px) {
+      .modal-content {
+        margin: 10% auto;
+        width: 95%;
+        padding: 20px;
+      }
+      .payment-method {
+        padding: 12px;
+      }
+      .payment-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <div class="logo">PharmaSoft</div>
+    <nav class="nav">
+      <a href="delivery.html">Delivery Address</a>
+      <a href="ayurvedic.html">Ayurvedic Medicine</a>
+      <a href="generic.html">Generic Medicine</a>  
+       <a href="index.html">Home</a>
+      <a href="cart.html">🛒 Cart (<span id="cart-count">0</span>)</a>
+     
+      <a href="login.html">Login</a>
+      <button id="logout-btn" style="display: none;">Logout</button>
+    </nav>
+  </header>
+
+  <section class="page-content cart-page">
+    <h2>Your Shopping Cart</h2>
+    <div class="cart-container">
+      <div class="cart-items-list" id="cart-items">
+        <p class="empty-cart-message">Your cart is empty.</p>
+      </div>
+      <div class="cart-summary" id="cart-summary">
+        <h3>Order Summary</h3>
+        <div class="cart-total-row"><span>Subtotal:</span> <span id="cart-subtotal">₹0.00</span></div>
+        <div class="cart-total-row"><span>Delivery Fee:</span> <span id="cart-delivery">₹0.00</span></div>
+        <div class="cart-total-row"><span>Tax (5%):</span> <span id="cart-tax">₹0.00</span></div>
+        <div class="cart-total-row final-total"><span>Total:</span> <span id="cart-total">₹0.00</span></div>
+        <button id="checkout-btn" disabled>Proceed to Payment</button>
+      </div>
+    </div>
+  </section>
+
+  <div id="payment-modal" class="modal">
+    <div class="modal-content">
+      <span class="close" aria-label="Close">&times;</span>
+      <div id="payment-form">
+        <h2 style="margin-bottom: 10px;">Choose Payment Method</h2>
+        <p style="color: #666; font-size: 14px; margin-bottom: 20px;">Select how you'd like to pay for your order</p>
+
+        <div class="order-summary">
+          <h3>Order Summary</h3>
+          <div class="summary-row"><span>Subtotal:</span> <span id="modal-subtotal">₹0.00</span></div>
+          <div class="summary-row"><span>Delivery:</span> <span id="modal-delivery">₹0.00</span></div>
+          <div class="summary-row"><span>Tax:</span> <span id="modal-tax">₹0.00</span></div>
+          <div class="summary-row total"><span>Total Amount:</span> <span id="modal-total">₹0.00</span></div>
+        </div>
+
+        <div class="payment-methods">
+          <div class="payment-method" data-method="razorpay">
+            <input type="radio" name="payment" value="razorpay">
+            <div class="payment-icon razorpay-icon">💳</div>
+            <div class="payment-method-info">
+              <strong>Razorpay <span class="payment-badge">POPULAR</span></strong>
+              <small>Cards, UPI, NetBanking & More</small>
+            </div>
+          </div>
+
+          
+          <div class="payment-method selected" data-method="cod">
+            <input type="radio" name="payment" value="cod" checked>
+            <div class="payment-icon cod-icon">💵</div>
+            <div class="payment-method-info">
+              <strong>Cash on Delivery</strong>
+              <small>Pay when you receive</small>
+            </div>
+          </div>
+        </div>
+
+        <div class="payment-note">
+          <strong>🔒 Secure Payment:</strong> All transactions are encrypted and secure. Your payment information is never stored.
+        </div>
+
+        <button class="pay-btn" id="confirm-payment-btn">
+          <span>Confirm & Pay ₹0.00</span>
+        </button>
+      </div>
+
+      <div id="payment-success" style="display:none;">
+        <div class="success-animation">
+          <div class="success-checkmark"><div class="checkmark">✓</div></div>
+          <div class="success-message">Payment Successful!</div>
+          <div class="order-id">Order ID: <span id="success-order-id">ORD-123456</span></div>
+          <p style="color: #666; margin: 20px 0;">Thank you for your purchase! Your order has been confirmed and will be delivered soon.</p>
+          <div style="margin-top: 30px; display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;">
+            <button class="pay-btn" onclick="goToOrders()" style="width: auto; padding: 12px 24px; background: linear-gradient(45deg, #28a745, #20c997);">View Orders</button>
+            <button class="pay-btn" onclick="continueShopping()" style="width: auto; padding: 12px 24px; background: #6c757d;">Continue Shopping</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+  <script>
+    const paymentModal = document.getElementById('payment-modal');
+    const checkoutBtn = document.getElementById('checkout-btn');
+    const closeModal = document.querySelector('.close');
+    const paymentMethods = document.querySelectorAll('.payment-method');
+    const confirmPaymentBtn = document.getElementById('confirm-payment-btn');
+    const paymentForm = document.getElementById('payment-form');
+    const paymentSuccess = document.getElementById('payment-success');
+
+    checkoutBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      openPaymentModal();
+    });
+
+    function openPaymentModal() {
+      document.getElementById('modal-subtotal').textContent = document.getElementById('cart-subtotal').textContent;
+      document.getElementById('modal-delivery').textContent = document.getElementById('cart-delivery').textContent;
+      document.getElementById('modal-tax').textContent = document.getElementById('cart-tax').textContent;
+      const totalText = document.getElementById('cart-total').textContent;
+      document.getElementById('modal-total').textContent = totalText;
+      updatePayButtonText(document.querySelector('input[name="payment"]:checked').value);
+      paymentModal.style.display = 'block';
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closePaymentModal() {
+      paymentModal.style.display = 'none';
+      document.body.style.overflow = 'auto';
+      resetPaymentModal();
+    }
+
+    closeModal.addEventListener('click', closePaymentModal);
+    window.addEventListener('click', (e) => { 
+      if (e.target === paymentModal) closePaymentModal(); 
+    });
+
+    function resetPaymentModal() {
+      paymentForm.style.display = 'block';
+      paymentSuccess.style.display = 'none';
+      confirmPaymentBtn.disabled = false;
+    }
+
+    paymentMethods.forEach(method => {
+      method.addEventListener('click', () => {
+        paymentMethods.forEach(m => m.classList.remove('selected'));
+        method.classList.add('selected');
+        const radio = method.querySelector('input[type="radio"]');
+        radio.checked = true;
+        updatePayButtonText(radio.value);
+      });
+    });
+
+    function updatePayButtonText(paymentMethod) {
+      const totalAmount = document.getElementById('modal-total').textContent;
+      const btnSpan = confirmPaymentBtn.querySelector('span');
+      const texts = {
+        'razorpay': `Pay ${totalAmount} via Razorpay`,
+        'stripe': `Pay ${totalAmount} via Stripe`,
+        'card': `Pay ${totalAmount} via Card`,
+        'upi': `Pay ${totalAmount} via UPI`,
+        'wallet': `Pay ${totalAmount} via Wallet`,
+        'cod': `Confirm Order - ${totalAmount}`
+      };
+      btnSpan.textContent = texts[paymentMethod] || `Confirm & Pay ${totalAmount}`;
+    }
+
+    confirmPaymentBtn.addEventListener('click', async () => {
+      const selectedPayment = document.querySelector('input[name="payment"]:checked');
+      if (!selectedPayment) {
+        alert('Please select a payment method');
+        return;
+      }
+
+      confirmPaymentBtn.disabled = true;
+      const originalText = confirmPaymentBtn.querySelector('span').textContent;
+      confirmPaymentBtn.querySelector('span').textContent = 'Processing Payment...';
+
+      try {
+        const result = await handleCheckout();
+        
+        if (result && result.orderId) {
+          showPaymentSuccess(result.orderId);
+        } else if (result !== false) {
+          showPaymentSuccess();
+        } else {
+          throw new Error('Payment failed');
+        }
+      } catch (error) {
+        console.error('Payment error:', error);
+        alert(error.message || 'Payment failed. Please try again.');
+        confirmPaymentBtn.disabled = false;
+        confirmPaymentBtn.querySelector('span').textContent = originalText;
+      }
+    });
+
+    function showPaymentSuccess(orderId) {
+      paymentForm.style.display = 'none';
+      paymentSuccess.style.display = 'block';
+      const orderIdElement = document.getElementById('success-order-id');
+      orderIdElement.textContent = orderId || 'ORD-' + Date.now();
+    }
+
+    function goToOrders() { 
+      window.location.href = 'orders.html'; 
+    }
+
+    function continueShopping() { 
+      closePaymentModal();
+      window.location.href = 'index.html'; 
+    }
+
+    window.goToOrders = goToOrders;
+    window.continueShopping = continueShopping;
+
+    document.addEventListener('DOMContentLoaded', () => {
+      updatePayButtonText('cod');
+    });
+  </script>
+</body>
+</html>
